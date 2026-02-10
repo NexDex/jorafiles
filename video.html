@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Файлы Георгия Иванова Giry</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        
+        body {
+            background-color: #000;
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            padding: 20px;
+            border-bottom: 2px solid #8b5cf6;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            color: #8b5cf6;
+        }
+        
+        .video-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        video {
+            width: 100%;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .back-btn {
+            background: #8b5cf6;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 20px;
+        }
+        
+        .reset-btn {
+            background: #ef4444;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 8px 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fas fa-play-circle"></i> Файлы Георгия Иванова Giry</h1>
+        <p>Доступ открыт</p>
+    </div>
+    
+    <div class="video-container">
+        <p>Ваши файлы:</p>
+        
+        <video controls>
+            <source src="your-video.mp4" type="video/mp4">
+            Ваш браузер не поддерживает видео.
+        </video>
+        
+        <div>
+            <a href="index.html" class="back-btn">
+                <i class="fas fa-arrow-left"></i> Назад к таймеру
+            </a>
+        </div>
+    </div>
+    
+    <button class="back-btn reset-btn" onclick="resetAccess()">
+        <i class="fas fa-redo"></i> Сбросить доступ
+    </button>
+
+    <script>
+        function resetAccess() {
+            localStorage.removeItem('giry_access');
+            location.href = 'index.html';
+        }
+        
+        // Проверяем доступ
+        if (localStorage.getItem('giry_access') !== 'true') {
+            location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>
