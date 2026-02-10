@@ -232,7 +232,7 @@
             <p class="subtitle">Эксклюзивный доступ к материалам откроется завтра в:</p>
             
             <div class="target-time">
-                <i class="fas fa-calendar-day"></i> Доступ откроется завтра в: <strong id="targetTimeDisplay">22:00</strong>
+                <i class="fas fa-calendar-day"></i> Доступ откроется: <strong id="targetTimeDisplay">Завтра в 22:00</strong>
             </div>
         </div>
         
@@ -282,48 +282,60 @@
         // Конфигурация
         const TARGET_HOUR = 22; // 22:00
         const TARGET_MINUTE = 0;
-        const ACCESS_KEY = 'permanentAccessGranted';
-        const ACCESS_TIME_KEY = 'accessTime';
+        const ACCESS_KEY = 'nikitaAccessGranted';
+        const TARGET_DATE_KEY = 'nikitaTargetDate';
         let timerInterval = null;
         
-        // Получаем завтрашнюю дату 22:00
-        function getTargetTime() {
-            // Проверяем, сохранено ли время в localStorage
-            const savedTime = localStorage.getItem(ACCESS_TIME_KEY);
-            if (savedTime) {
-                return new Date(savedTime);
-            }
+        // Получаем время цели (завтра 22:00)
+        function getTargetDateTime() {
+            // Проверяем, сохранено ли время цели
+            const savedTarget = localStorage.getItem(TARGET_DATE_KEY);
             
-            // Если не сохранено, создаем завтрашнюю дату 22:00
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            tomorrow.setHours(TARGET_HOUR, TARGET_MINUTE, 0, 0);
-            localStorage.setItem(ACCESS_TIME_KEY, tomorrow.toISOString());
-            return tomorrow;
+            if (savedTarget) {
+                return new Date(savedTarget);
+            } else {
+                // Создаем новое время цели: завтра в 22:00
+                const now = new Date();
+                const tomorrow = new Date(now);
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                tomorrow.setHours(TARGET_HOUR, TARGET_MINUTE, 0, 0);
+                
+                // Сохраняем в localStorage
+                localStorage.setItem(TARGET_DATE_KEY, tomorrow.toISOString());
+                return tomorrow;
+            }
         }
         
-        // Проверяем, был ли уже предоставлен постоянный доступ
-        function checkPermanentAccess() {
+        // Проверяем, был ли уже предоставлен доступ
+        function checkAccessGranted() {
             return localStorage.getItem(ACCESS_KEY) === 'true';
         }
         
-        // Проверяем, наступило ли время доступа
+        // Проверяем, наступило ли время цели
         function isTargetTimeReached() {
             const now = new Date();
-            const targetTime = getTargetTime();
+            const targetTime = getTargetDateTime();
             return now >= targetTime;
         }
         
-        // Предоставить постоянный доступ
-        function grantPermanentAccess() {
+        // Предоставить доступ
+        function grantAccess() {
             localStorage.setItem(ACCESS_KEY, 'true');
             localStorage.setItem('accessGranted', 'true');
+        }
+        
+        // Сбросить доступ (для тестирования)
+        function resetAccess() {
+            localStorage.removeItem(ACCESS_KEY);
+            localStorage.removeItem(TARGET_DATE_KEY);
+            localStorage.removeItem('accessGranted');
+            window.location.reload();
         }
         
         // Функция для расчета времени до цели
         function calculateTimeUntilTarget() {
             const now = new Date();
-            const targetTime = getTargetTime();
+            const targetTime = getTargetDateTime();
             
             // Рассчитываем разницу в секундах
             const diffMs = targetTime - now;
@@ -341,25 +353,20 @@
                 };
             }
             
-            // Рассчитываем дни, часы, минуты, секунды
-            const days = Math.floor(diffSeconds / (3600 * 24));
-            const hours = Math.floor((diffSeconds % (3600 * 24)) / 3600);
+            // Рассчитываем часы, минуты, секунды
+            const hours = Math.floor(diffSeconds / 3600);
             const minutes = Math.floor((diffSeconds % 3600) / 60);
             const seconds = diffSeconds % 60;
             
-            // Рассчитываем общий прогресс (с момента создания таймера до цели)
-            const savedTime = localStorage.getItem('timerStartTime');
-            if (!savedTime) {
-                localStorage.setItem('timerStartTime', now.toISOString());
-            }
+            // Рассчитываем прогресс (от начала отсчета до цели)
+            const startTime = getTargetDateTime();
+            startTime.setDate(startTime.getDate() - 1); // За 24 часа до цели
             
-            const startTime = savedTime ? new Date(savedTime) : now;
             const totalTimeMs = targetTime - startTime;
             const elapsedMs = now - startTime;
             const progress = Math.min(100, Math.floor((elapsedMs / totalTimeMs) * 100));
             
             return {
-                days,
                 hours,
                 minutes,
                 seconds,
@@ -371,16 +378,16 @@
         
         // Инициализация таймера
         function initTimer() {
-            // Проверяем постоянный доступ
-            if (checkPermanentAccess()) {
-                showPermanentAccessGranted();
+            // Проверяем, не открыт ли уже доступ
+            if (checkAccessGranted()) {
+                showAccessGranted();
                 return;
             }
             
-            // Если уже время наступило
+            // Если время цели уже наступило
             if (isTargetTimeReached()) {
-                grantPermanentAccess();
-                showPermanentAccessGranted();
+                grantAccess();
+                showAccessGranted();
                 return;
             }
             
@@ -399,43 +406,40 @@
             // Рассчитываем время до цели
             const timeData = calculateTimeUntilTarget();
             
-            // Отображаем дни и часы
-            const totalHours = timeData.days * 24 + timeData.hours;
-            
-            // Обновляем отображение
+            // Обновляем отображение таймера
             document.getElementById('timer').textContent = 
-                `${totalHours.toString().padStart(2, '0')}:${timeData.minutes.toString().padStart(2, '0')}:${timeData.seconds.toString().padStart(2, '0')}`;
+                `${timeData.hours.toString().padStart(2, '0')}:${timeData.minutes.toString().padStart(2, '0')}:${timeData.seconds.toString().padStart(2, '0')}`;
             
-            document.getElementById('hours').textContent = totalHours.toString().padStart(2, '0');
+            document.getElementById('hours').textContent = timeData.hours.toString().padStart(2, '0');
             document.getElementById('minutes').textContent = timeData.minutes.toString().padStart(2, '0');
             document.getElementById('seconds').textContent = timeData.seconds.toString().padStart(2, '0');
             document.getElementById('progress').textContent = `${timeData.progress}%`;
             
             // Меняем цвет при последних часах
-            if (totalHours <= 1 && totalHours > 0) {
+            if (timeData.hours <= 1 && timeData.hours > 0) {
                 document.getElementById('timer').classList.add('last-hours');
                 document.getElementById('hours').style.color = '#f87171';
                 document.getElementById('statusMessage').innerHTML = 
                     `<i class="fas fa-hourglass-end"></i> Меньше часа до открытия доступа!`;
-            } else if (totalHours <= 3 && totalHours > 0) {
+            } else if (timeData.hours <= 3 && timeData.hours > 0) {
                 document.getElementById('timer').style.color = '#fbbf24';
                 document.getElementById('timer').style.textShadow = '0 0 20px rgba(251, 191, 36, 0.7)';
                 document.getElementById('hours').style.color = '#fbbf24';
-            } else if (totalHours <= 24 && totalHours > 0) {
+            } else if (timeData.hours <= 24) {
                 document.getElementById('statusMessage').innerHTML = 
                     `<i class="fas fa-hourglass-half"></i> Доступ откроется завтра в 22:00`;
             }
             
-            // Проверяем, наступило ли время
+            // Проверяем, наступило ли время цели
             if (timeData.totalSeconds <= 0) {
                 clearInterval(timerInterval);
-                grantPermanentAccess();
-                showPermanentAccessGranted();
+                grantAccess();
+                showAccessGranted();
             }
         }
         
-        // Показать сообщение о постоянном доступе
-        function showPermanentAccessGranted() {
+        // Показать сообщение о предоставленном доступе
+        function showAccessGranted() {
             // Обновляем интерфейс
             document.getElementById('timer').textContent = "00:00:00";
             document.getElementById('timer').classList.remove('last-hours');
@@ -444,7 +448,7 @@
             
             document.getElementById('statusMessage').className = "status-message ready";
             document.getElementById('statusMessage').innerHTML = 
-                '<i class="fas fa-check-circle"></i> Доступ открыт!';
+                '<i class="fas fa-check-circle"></i> Доступ открыт! Нажмите кнопку ниже';
             
             document.getElementById('hours').textContent = "00";
             document.getElementById('minutes').textContent = "00";
@@ -466,8 +470,9 @@
         // Запускаем таймер при загрузке страницы
         window.addEventListener('load', function() {
             // Отображаем целевое время
-            const targetTime = getTargetTime();
+            const targetTime = getTargetDateTime();
             const options = { 
+                weekday: 'long', 
                 day: 'numeric', 
                 month: 'long', 
                 hour: '2-digit', 
@@ -485,6 +490,13 @@
                 document.getElementById('currentTime').textContent = 
                     now.toLocaleTimeString('ru-RU');
             }, 1000);
+            
+            // Добавляем кнопку сброса для тестирования (скрыто)
+            const resetBtn = document.createElement('button');
+            resetBtn.innerHTML = '<i class="fas fa-redo"></i> Сбросить таймер';
+            resetBtn.style.cssText = 'position:fixed;bottom:10px;right:10px;background:#ef4444;color:white;border:none;padding:8px 15px;border-radius:5px;cursor:pointer;font-size:12px;';
+            resetBtn.onclick = resetAccess;
+            document.body.appendChild(resetBtn);
         });
     </script>
 </body>
