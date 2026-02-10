@@ -280,20 +280,41 @@
 
     <script>
         // Конфигурация
-        const TARGET_HOUR = 22; // 22:00
+        // Получаем завтрашнюю дату
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(22, 0, 0, 0);
+
+    // Проверяем, наступило ли уже время доступа
+    const now = new Date();
+    const timeUntilTarget = tomorrow - now;
+
+    // Проверяем доступ
+    function checkAccess() {
+    const now = new Date();
+    const accessTime = localStorage.getItem('accessTime');
+    
+    // Если время доступа записано, проверяем его
+    if (accessTime) {
+        const targetTime = new Date(accessTime);
+        return now >= targetTime;
+    }
+    
+    return false;
+}
         const TARGET_MINUTE = 0;
         const ACCESS_KEY = 'permanentAccessGranted';
         let timerInterval = null;
         
         // Проверяем, был ли уже предоставлен постоянный доступ
         function checkPermanentAccess() {
-            return localStorage.getItem(ACCESS_KEY) === 'true';
+            return checkAccess() || localStorage.getItem(ACCESS_KEY) === 'true';
         }
-        
         // Предоставить постоянный доступ
-        function grantPermanentAccess() {
-            localStorage.setItem(ACCESS_KEY, 'true');
-            localStorage.setItem('accessGranted', 'true');
+       function grantPermanentAccess() {
+        localStorage.setItem(ACCESS_KEY, 'true');
+        localStorage.setItem('accessGranted', 'true');
+        localStorage.setItem('accessTime', tomorrow.toISOString()); // Сохраняем время доступа
         }
         
         // Функция для расчета времени до 22:00
@@ -348,24 +369,9 @@
             return now.getHours() >= TARGET_HOUR && now.getMinutes() >= TARGET_MINUTE;
         }
         
-        // Инициализация таймера
-        function initTimer() {
-            // Проверяем постоянный доступ
-            if (checkPermanentAccess()) {
-                showPermanentAccessGranted();
-                return;
-            }
-            
-            // Если уже 22:00 или позже
-            if (isTargetTimeReached()) {
-                grantPermanentAccess();
-                showPermanentAccessGranted();
-                return;
-            }
-            
-            // Запускаем таймер
-            updateTimer();
-            timerInterval = setInterval(updateTimer, 1000);
+     function isTargetTimeReached() 
+        {
+        return checkAccess();
         }
         
         function updateTimer() {
