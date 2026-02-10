@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Файлы Никита Н.А - Доступ через 22:00</title>
+    <title>Файлы Иванова Георгия Giry </title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -229,21 +229,26 @@
     <div class="container">
         <div class="header">
             <h1><i class="fas fa-lock"></i> Файлы Никита Н.А</h1>
-            <p class="subtitle">Эксклюзивный доступ к материалам откроется завтра в:</p>
+            <p class="subtitle">Эксклюзивный доступ к материалам откроется:</p>
             
             <div class="target-time">
-                <i class="fas fa-calendar-day"></i> Доступ откроется: <strong id="targetTimeDisplay">Завтра в 22:00</strong>
+                <i class="fas fa-calendar-day"></i> Доступ откроется: <strong id="targetTimeDisplay">11 февраля 2026 в 22:00 (GMT+9)</strong>
             </div>
         </div>
         
         <div class="current-time">
-            <div>Текущее время:</div>
+            <div>Текущее время (GMT+9):</div>
             <div class="server-time" id="currentTime">--:--:--</div>
+            <div style="font-size: 0.9rem; color: #a0a0a0; margin-top: 5px;" id="currentDate">--.--.----</div>
         </div>
         
         <div class="timer-container">
             <div id="timer">00:00:00</div>
             <div class="timer-details">
+                <div class="time-unit">
+                    <div class="time-value" id="days">00</div>
+                    <div class="time-label">Дней</div>
+                </div>
                 <div class="time-unit">
                     <div class="time-value" id="hours">00</div>
                     <div class="time-label">Часов</div>
@@ -256,15 +261,11 @@
                     <div class="time-value" id="seconds">00</div>
                     <div class="time-label">Секунд</div>
                 </div>
-                <div class="time-unit">
-                    <div class="time-value" id="progress">0%</div>
-                    <div class="time-label">Прогресс</div>
-                </div>
             </div>
         </div>
         
         <div class="status-message waiting" id="statusMessage">
-            <i class="fas fa-hourglass-start"></i> Обратный отсчёт до завтра 22:00...
+            <i class="fas fa-hourglass-start"></i> Обратный отсчёт до открытия доступа...
         </div>
         
         <div id="accessButtonContainer" style="display: none;">
@@ -274,36 +275,46 @@
         </div>
         
         <div style="text-align: center; margin-top: 30px; color: #a0a0a0; font-size: 0.9rem;">
-            <i class="fas fa-info-circle"></i> Доступ откроется завтра в 22:00 и будет доступен навсегда
+            <i class="fas fa-info-circle"></i> Доступ откроется 11 февраля 2026 в 22:00 по времени GMT+9
         </div>
     </div>
 
     <script>
-        // Конфигурация
+        // КОНФИГУРАЦИЯ
+        const TARGET_YEAR = 2026;
+        const TARGET_MONTH = 1; // Февраль (0-январь, 1-февраль)
+        const TARGET_DAY = 11;
         const TARGET_HOUR = 22; // 22:00
         const TARGET_MINUTE = 0;
-        const ACCESS_KEY = 'nikitaAccessGranted';
-        const TARGET_DATE_KEY = 'nikitaTargetDate';
+        
+        const ACCESS_KEY = 'nikitaAccessGranted_2026_02_11';
         let timerInterval = null;
         
-        // Получаем время цели (завтра 22:00)
+        // Получаем время цели (11 февраля 2026, 22:00 GMT+9)
         function getTargetDateTime() {
-            // Проверяем, сохранено ли время цели
-            const savedTarget = localStorage.getItem(TARGET_DATE_KEY);
+            // Создаем время цели: 11 февраля 2026, 22:00 по GMT+9
+            const targetTime = new Date(Date.UTC(
+                TARGET_YEAR,
+                TARGET_MONTH,
+                TARGET_DAY,
+                TARGET_HOUR - 9, // GMT+9 -> UTC: вычитаем 9 часов
+                TARGET_MINUTE,
+                0,
+                0
+            ));
             
-            if (savedTarget) {
-                return new Date(savedTarget);
-            } else {
-                // Создаем новое время цели: завтра в 22:00
-                const now = new Date();
-                const tomorrow = new Date(now);
-                tomorrow.setDate(tomorrow.getDate() + 1);
-                tomorrow.setHours(TARGET_HOUR, TARGET_MINUTE, 0, 0);
-                
-                // Сохраняем в localStorage
-                localStorage.setItem(TARGET_DATE_KEY, tomorrow.toISOString());
-                return tomorrow;
-            }
+            console.log('Целевое время (UTC):', targetTime.toISOString());
+            console.log('Целевое время (локальное):', targetTime.toString());
+            
+            return targetTime;
+        }
+        
+        // Получаем текущее время с учетом GMT+9
+        function getCurrentTimeGMT9() {
+            const now = new Date();
+            // GMT+9 = UTC+9
+            const gmt9Offset = 9 * 60 * 60 * 1000; // 9 часов в миллисекундах
+            return new Date(now.getTime() + gmt9Offset);
         }
         
         // Проверяем, был ли уже предоставлен доступ
@@ -313,9 +324,13 @@
         
         // Проверяем, наступило ли время цели
         function isTargetTimeReached() {
-            const now = new Date();
+            const currentTimeGMT9 = getCurrentTimeGMT9();
             const targetTime = getTargetDateTime();
-            return now >= targetTime;
+            
+            console.log('Текущее время (GMT+9):', currentTimeGMT9.toISOString());
+            console.log('Сравнение:', currentTimeGMT9.getTime(), '>=', targetTime.getTime());
+            
+            return currentTimeGMT9 >= targetTime;
         }
         
         // Предоставить доступ
@@ -327,107 +342,112 @@
         // Сбросить доступ (для тестирования)
         function resetAccess() {
             localStorage.removeItem(ACCESS_KEY);
-            localStorage.removeItem(TARGET_DATE_KEY);
             localStorage.removeItem('accessGranted');
             window.location.reload();
         }
         
         // Функция для расчета времени до цели
         function calculateTimeUntilTarget() {
-            const now = new Date();
+            const currentTimeGMT9 = getCurrentTimeGMT9();
             const targetTime = getTargetDateTime();
             
-            // Рассчитываем разницу в секундах
-            const diffMs = targetTime - now;
-            const diffSeconds = Math.floor(diffMs / 1000);
+            // Рассчитываем разницу в миллисекундах
+            const diffMs = targetTime - currentTimeGMT9;
             
             // Если разница отрицательная (уже после времени цели), возвращаем 0
-            if (diffSeconds <= 0) {
+            if (diffMs <= 0) {
                 return {
+                    days: 0,
                     hours: 0,
                     minutes: 0,
                     seconds: 0,
                     totalSeconds: 0,
-                    progress: 100,
                     targetTime: targetTime
                 };
             }
             
-            // Рассчитываем часы, минуты, секунды
-            const hours = Math.floor(diffSeconds / 3600);
-            const minutes = Math.floor((diffSeconds % 3600) / 60);
-            const seconds = diffSeconds % 60;
-            
-            // Рассчитываем прогресс (от начала отсчета до цели)
-            const startTime = getTargetDateTime();
-            startTime.setDate(startTime.getDate() - 1); // За 24 часа до цели
-            
-            const totalTimeMs = targetTime - startTime;
-            const elapsedMs = now - startTime;
-            const progress = Math.min(100, Math.floor((elapsedMs / totalTimeMs) * 100));
+            // Рассчитываем дни, часы, минуты, секунды
+            const totalSeconds = Math.floor(diffMs / 1000);
+            const days = Math.floor(totalSeconds / (3600 * 24));
+            const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
             
             return {
+                days,
                 hours,
                 minutes,
                 seconds,
-                totalSeconds: diffSeconds,
-                progress,
+                totalSeconds,
                 targetTime: targetTime
             };
         }
         
         // Инициализация таймера
         function initTimer() {
+            console.log('Инициализация таймера...');
+            
             // Проверяем, не открыт ли уже доступ
             if (checkAccessGranted()) {
+                console.log('Доступ уже предоставлен');
                 showAccessGranted();
                 return;
             }
             
             // Если время цели уже наступило
             if (isTargetTimeReached()) {
+                console.log('Время цели наступило, предоставляем доступ');
                 grantAccess();
                 showAccessGranted();
                 return;
             }
             
+            console.log('Запускаем таймер обратного отсчета');
             // Запускаем таймер
             updateTimer();
             timerInterval = setInterval(updateTimer, 1000);
         }
         
         function updateTimer() {
-            const now = new Date();
+            const currentTimeGMT9 = getCurrentTimeGMT9();
             
             // Обновляем текущее время
-            document.getElementById('currentTime').textContent = 
-                now.toLocaleTimeString('ru-RU');
+            const timeStr = currentTimeGMT9.toISOString().substr(11, 8);
+            const dateStr = currentTimeGMT9.toISOString().substr(0, 10).split('-').reverse().join('.');
+            
+            document.getElementById('currentTime').textContent = timeStr;
+            document.getElementById('currentDate').textContent = dateStr;
             
             // Рассчитываем время до цели
             const timeData = calculateTimeUntilTarget();
             
             // Обновляем отображение таймера
-            document.getElementById('timer').textContent = 
-                `${timeData.hours.toString().padStart(2, '0')}:${timeData.minutes.toString().padStart(2, '0')}:${timeData.seconds.toString().padStart(2, '0')}`;
+            if (timeData.days > 0) {
+                // Если остались дни, показываем дни:часы:минуты
+                document.getElementById('timer').textContent = 
+                    `${timeData.days.toString().padStart(2, '0')}:${timeData.hours.toString().padStart(2, '0')}:${timeData.minutes.toString().padStart(2, '0')}`;
+            } else {
+                // Если дней нет, показываем часы:минуты:секунды
+                document.getElementById('timer').textContent = 
+                    `${timeData.hours.toString().padStart(2, '0')}:${timeData.minutes.toString().padStart(2, '0')}:${timeData.seconds.toString().padStart(2, '0')}`;
+            }
             
+            document.getElementById('days').textContent = timeData.days.toString().padStart(2, '0');
             document.getElementById('hours').textContent = timeData.hours.toString().padStart(2, '0');
             document.getElementById('minutes').textContent = timeData.minutes.toString().padStart(2, '0');
             document.getElementById('seconds').textContent = timeData.seconds.toString().padStart(2, '0');
-            document.getElementById('progress').textContent = `${timeData.progress}%`;
             
-            // Меняем цвет при последних часах
-            if (timeData.hours <= 1 && timeData.hours > 0) {
+            // Обновляем статусное сообщение
+            if (timeData.days > 0) {
+                document.getElementById('statusMessage').innerHTML = 
+                    `<i class="fas fa-calendar-alt"></i> Доступ откроется через ${timeData.days} дней`;
+            } else if (timeData.hours > 0) {
+                document.getElementById('statusMessage').innerHTML = 
+                    `<i class="fas fa-hourglass-half"></i> Доступ откроется через ${timeData.hours} часов`;
+            } else if (timeData.minutes > 0) {
+                document.getElementById('statusMessage').innerHTML = 
+                    `<i class="fas fa-hourglass-end"></i> Доступ откроется через ${timeData.minutes} минут`;
                 document.getElementById('timer').classList.add('last-hours');
-                document.getElementById('hours').style.color = '#f87171';
-                document.getElementById('statusMessage').innerHTML = 
-                    `<i class="fas fa-hourglass-end"></i> Меньше часа до открытия доступа!`;
-            } else if (timeData.hours <= 3 && timeData.hours > 0) {
-                document.getElementById('timer').style.color = '#fbbf24';
-                document.getElementById('timer').style.textShadow = '0 0 20px rgba(251, 191, 36, 0.7)';
-                document.getElementById('hours').style.color = '#fbbf24';
-            } else if (timeData.hours <= 24) {
-                document.getElementById('statusMessage').innerHTML = 
-                    `<i class="fas fa-hourglass-half"></i> Доступ откроется завтра в 22:00`;
             }
             
             // Проверяем, наступило ли время цели
@@ -440,6 +460,8 @@
         
         // Показать сообщение о предоставленном доступе
         function showAccessGranted() {
+            console.log('Показываем доступ открыт');
+            
             // Обновляем интерфейс
             document.getElementById('timer').textContent = "00:00:00";
             document.getElementById('timer').classList.remove('last-hours');
@@ -450,11 +472,10 @@
             document.getElementById('statusMessage').innerHTML = 
                 '<i class="fas fa-check-circle"></i> Доступ открыт! Нажмите кнопку ниже';
             
+            document.getElementById('days').textContent = "00";
             document.getElementById('hours').textContent = "00";
             document.getElementById('minutes').textContent = "00";
             document.getElementById('seconds').textContent = "00";
-            document.getElementById('progress').textContent = "100%";
-            document.getElementById('hours').style.color = '#10b981';
             
             // Обновляем отображение целевого времени
             document.querySelector('.target-time').innerHTML = 
@@ -467,37 +488,29 @@
             document.getElementById('accessButtonContainer').style.display = 'block';
         }
         
-        // Запускаем таймер при загрузке страницы
+        // Запускаем при загрузке страницы
         window.addEventListener('load', function() {
-            // Отображаем целевое время
-            const targetTime = getTargetDateTime();
-            const options = { 
-                weekday: 'long', 
-                day: 'numeric', 
-                month: 'long', 
-                hour: '2-digit', 
-                minute: '2-digit' 
-            };
-            const formattedDate = targetTime.toLocaleDateString('ru-RU', options);
-            document.getElementById('targetTimeDisplay').textContent = `${formattedDate}`;
+            console.log('Страница загружена');
             
             // Запускаем основной таймер
             initTimer();
             
-            // Обновляем текущее время каждую секунду
-            setInterval(function() {
-                const now = new Date();
-                document.getElementById('currentTime').textContent = 
-                    now.toLocaleTimeString('ru-RU');
-            }, 1000);
-            
-            // Добавляем кнопку сброса для тестирования (скрыто)
+            // Добавляем кнопку сброса для тестирования
             const resetBtn = document.createElement('button');
-            resetBtn.innerHTML = '<i class="fas fa-redo"></i> Сбросить таймер';
-            resetBtn.style.cssText = 'position:fixed;bottom:10px;right:10px;background:#ef4444;color:white;border:none;padding:8px 15px;border-radius:5px;cursor:pointer;font-size:12px;';
+            resetBtn.innerHTML = '<i class="fas fa-redo"></i> Сбросить доступ';
+            resetBtn.style.cssText = 'position:fixed;bottom:10px;right:10px;background:#ef4444;color:white;border:none;padding:8px 15px;border-radius:5px;cursor:pointer;font-size:12px;z-index:1000;';
             resetBtn.onclick = resetAccess;
             document.body.appendChild(resetBtn);
+            
+            console.log('Таймер запущен');
         });
+        
+        // Для отладки в консоли
+        console.log('Скрипт загружен');
+        console.log('Целевая дата:', getTargetDateTime());
+        console.log('Текущее время GMT+9:', getCurrentTimeGMT9());
+        console.log('Доступ открыт?', checkAccessGranted());
+        console.log('Время наступило?', isTargetTimeReached());
     </script>
 </body>
 </html>
