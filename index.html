@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Файлы Георгия Иванова Giry</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        
+        body {
+            background-color: #000;
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+        }
+        
+        h1 {
+            color: #8b5cf6;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+        }
+        
+        .timer-box {
+            background: #1a1a1a;
+            padding: 40px;
+            border-radius: 15px;
+            margin: 20px 0;
+            border: 2px solid #8b5cf6;
+        }
+        
+        #timer {
+            font-size: 4rem;
+            font-family: 'Courier New', monospace;
+            color: #8b5cf6;
+            margin: 20px 0;
+            text-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+        }
+        
+        .current-time {
+            color: #10b981;
+            font-family: monospace;
+            font-size: 1.2rem;
+            margin: 10px 0;
+        }
+        
+        .btn {
+            background: #8b5cf6;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+            transition: 0.3s;
+        }
+        
+        .btn:hover {
+            background: #7c3aed;
+            transform: translateY(-2px);
+        }
+        
+        .access-btn {
+            background: #10b981;
+            display: none;
+            text-decoration: none;
+        }
+        
+        .access-btn:hover {
+            background: #059669;
+        }
+        
+        .reset-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #ef4444;
+            padding: 8px 15px;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><i class="fas fa-folder"></i> Файлы Георгия Иванова Giry</h1>
+        
+        <div class="timer-box">
+            <p>Таймер доступа:</p>
+            <div id="timer">13:00:00</div>
+            <p class="current-time" id="currentTime"></p>
+            <p>Доступ откроется автоматически</p>
+        </div>
+        
+        <a href="video.html" class="btn access-btn" id="accessBtn">
+            <i class="fas fa-unlock"></i> Открыть файлы
+        </a>
+    </div>
+    
+    <button class="btn reset-btn" onclick="resetAll()">
+        <i class="fas fa-redo"></i> Сбросить всё
+    </button>
+
+    <script>
+        // Таймер: 13 часов
+        let hours = 13;
+        let minutes = 0;
+        let seconds = 0;
+        let timerRunning = true;
+        
+        const timerElement = document.getElementById('timer');
+        const currentTimeElement = document.getElementById('currentTime');
+        const accessBtn = document.getElementById('accessBtn');
+        
+        // Показываем текущее время
+        function updateCurrentTime() {
+            const now = new Date();
+            currentTimeElement.textContent = `Текущее время: ${now.toLocaleTimeString()}`;
+        }
+        
+        // Обновляем таймер
+        function updateTimer() {
+            timerElement.textContent = 
+                `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        // Запускаем обратный отсчет
+        function startCountdown() {
+            const interval = setInterval(() => {
+                if (seconds > 0) {
+                    seconds--;
+                } else if (minutes > 0) {
+                    minutes--;
+                    seconds = 59;
+                } else if (hours > 0) {
+                    hours--;
+                    minutes = 59;
+                    seconds = 59;
+                } else {
+                    // Таймер завершен
+                    clearInterval(interval);
+                    timerRunning = false;
+                    showAccess();
+                    return;
+                }
+                
+                updateTimer();
+                
+                // Если время вышло
+                if (hours === 0 && minutes === 0 && seconds === 0) {
+                    clearInterval(interval);
+                    timerRunning = false;
+                    showAccess();
+                }
+            }, 1000);
+        }
+        
+        // Показываем кнопку доступа
+        function showAccess() {
+            accessBtn.style.display = 'inline-block';
+            timerElement.textContent = "00:00:00";
+            timerElement.style.color = "#10b981";
+            
+            // Сохраняем в localStorage
+            localStorage.setItem('giry_access', 'true');
+        }
+        
+        // Проверяем, был ли доступ уже открыт
+        function checkAccess() {
+            if (localStorage.getItem('giry_access') === 'true') {
+                showAccess();
+                return true;
+            }
+            return false;
+        }
+        
+        // Сброс всего
+        function resetAll() {
+            localStorage.removeItem('giry_access');
+            location.reload();
+        }
+        
+        // Запускаем при загрузке
+        window.addEventListener('load', function() {
+            updateCurrentTime();
+            updateTimer();
+            
+            // Обновляем текущее время каждую секунду
+            setInterval(updateCurrentTime, 1000);
+            
+            // Проверяем доступ
+            if (!checkAccess()) {
+                // Если доступ не открыт, запускаем таймер
+                startCountdown();
+            }
+        });
+    </script>
+</body>
+</html>
